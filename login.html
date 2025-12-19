@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Login - USTI</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      /* Pastikan gambar background ada, atau ganti warna jika tidak ada */
+      background: url('docs/assets/img/ustii.jpg') no-repeat center center fixed;
+      background-size: cover;
+      background-color: #f0f2f5; 
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .login-container {
+      width: 100%;
+      max-width: 400px;
+      padding: 40px;
+      border-radius: 15px;
+      background-color: rgba(255, 255, 255, 0.9); /* Efek Kaca */
+      box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+    }
+
+    .login-container h2 {
+      text-align: center;
+      margin-bottom: 30px;
+      color: #00478d;
+      font-weight: bold;
+    }
+
+    .form-control {
+      border-radius: 8px;
+      padding: 10px;
+    }
+
+    .btn-login {
+      width: 100%;
+      padding: 12px;
+      background-color: #00478d;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 16px;
+      transition: all 0.3s;
+    }
+
+    .btn-login:hover {
+      background-color: #003366;
+      transform: translateY(-2px);
+    }
+
+    .input-group-text {
+      background: white;
+      cursor: pointer;
+      border-left: none;
+      border-radius: 0 8px 8px 0;
+    }
+    
+    .password-field {
+        border-right: none;
+        border-radius: 8px 0 0 8px;
+    }
+
+    .footer-link {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 14px;
+    }
+    
+    .footer-link a {
+        text-decoration: none;
+        color: #00478d;
+        font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="login-container">
+    <h2>Login Sistem</h2>
+    
+    <form onsubmit="event.preventDefault(); handleLogin();">
+      
+      <div class="mb-3">
+        <label for="login-nama" class="form-label fw-bold">Nama User</label>
+        <div class="input-group">
+            <span class="input-group-text" style="border-right:none; border-radius: 8px 0 0 8px; cursor: default;">
+                <i class="bi bi-person"></i>
+            </span>
+            <input type="text" class="form-control" id="login-nama" placeholder="Masukkan Nama Anda" required style="border-left:none; border-radius: 0 8px 8px 0;">
+        </div>
+      </div>
+
+      <div class="mb-4">
+        <label for="login-password" class="form-label fw-bold">Password</label>
+        <div class="input-group">
+          <input type="password" class="form-control password-field" id="login-password" placeholder="Masukkan Password" required>
+          <span class="input-group-text toggle-password">
+            <i class="bi bi-eye-slash"></i>
+          </span>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-login">Masuk</button>
+
+      <div class="footer-link">
+        Belum punya akun? <a href="register_admin.html">Daftar sekarang</a>
+      </div>
+    </form>
+  </div>
+
+  <script src="db.js"></script>
+  
+  <script>
+    // 1. Cek Sesi (Jika sudah login, langsung lempar ke dashboard yang sesuai)
+    const activeSession = JSON.parse(localStorage.getItem('user_session'));
+    if(activeSession) {
+        redirectUser(activeSession.role);
+    }
+
+    // 2. Fitur Lihat Password
+    document.querySelector('.toggle-password').addEventListener('click', function() {
+        const input = document.getElementById('login-password');
+        const icon = this.querySelector('i');
+        if (input.type === "password") {
+            input.type = "text";
+            icon.classList.remove('bi-eye-slash');
+            icon.classList.add('bi-eye');
+        } else {
+            input.type = "password";
+            icon.classList.remove('bi-eye');
+            icon.classList.add('bi-eye-slash');
+        }
+    });
+
+    // 3. Logic Login
+    async function handleLogin() {
+        const nama = document.getElementById('login-nama').value;
+        const password = document.getElementById('login-password').value;
+
+        try {
+            // Memanggil fungsi login dari db.js (Login by Nama)
+            const user = await dbService.login(nama, password);
+            
+            // Simpan sesi
+            const sessionData = { 
+                id_user: user.id_user, 
+                nama: user.nama, 
+                role: user.role 
+            };
+            
+            localStorage.setItem('user_session', JSON.stringify(sessionData));
+            
+            alert("Login Berhasil! Selamat datang " + user.nama);
+            
+            // Redirect sesuai Role
+            redirectUser(user.role);
+
+        } catch (error) {
+            alert("Gagal Login: " + error);
+        }
+    }
+
+    // 4. Fungsi Redirect Halaman
+    function redirectUser(role) {
+        switch(role) {
+            case 'admin':
+                window.location.href = 'dashboard_admin.html';
+                break;
+            case 'sarpras':
+                window.location.href = 'dashboard_sarpras.html';
+                break;
+            case 'tkj':
+                window.location.href = 'dashboard_tkj.html';
+                break;
+            case 'uks':
+                window.location.href = 'dashboard_uks.html';
+                break;
+            default:
+                alert("Role tidak dikenali, hubungi admin.");
+                localStorage.removeItem('user_session'); // Hapus sesi error
+        }
+    }
+  </script>
+
+</body>
+</html>

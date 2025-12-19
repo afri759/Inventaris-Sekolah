@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Inventaris TKJ | USTI</title>
+
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+</head>
+
+<body class="hold-transition sidebar-mini layout-fixed">
+<script>
+    const session = JSON.parse(localStorage.getItem('user_session'));
+    if (!session || session.role !== 'tkj') { window.location.href = 'login.html'; }
+</script>
+
+<div class="wrapper">
+  <nav class="main-header navbar navbar-expand navbar-white navbar-light">
+    <ul class="navbar-nav"><li class="nav-item"><a class="nav-link" data-widget="pushmenu" href="#"><i class="fas fa-bars"></i></a></li></ul>
+    <ul class="navbar-nav ml-auto"><li class="nav-item"><a class="nav-link" href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</a></li></ul>
+  </nav>
+
+  <aside class="main-sidebar sidebar-dark-info elevation-4">
+    <a href="#" class="brand-link"><span class="brand-text font-weight-light pl-3">Panel <b>TKJ</b></span></a>
+    <div class="sidebar">
+      <div class="user-panel mt-3 pb-3 mb-3 d-flex">
+        <div class="image"><img src="https://cdn-icons-png.flaticon.com/512/3048/3048122.png" class="img-circle elevation-2"></div>
+        <div class="info"><a href="#" class="d-block" id="sidebar-name">User</a></div>
+      </div>
+      <nav class="mt-2">
+        <ul class="nav nav-pills nav-sidebar flex-column">
+          <li class="nav-item"><a href="dashboard_tkj.html" class="nav-link"><i class="nav-icon fas fa-tachometer-alt"></i><p>Dashboard</p></a></li>
+          <li class="nav-item"><a href="inventaris_tkj.html" class="nav-link"><i class="nav-icon fas fa-boxes"></i><p>Inventaris Barang</p></a></li>
+          <li class="nav-item"><a href="manajemen_labor.html" class="nav-link active"><i class="nav-icon fas fa-desktop"></i><p>Komputer Labor</p></a></li>
+        </ul>
+      </nav>
+    </div>
+  </aside>
+
+  <div class="content-wrapper">
+    <section class="content-header">
+      <div class="container-fluid"><h1>Inventarisasi Barang TKJ</h1></div>
+    </section>
+
+    <section class="content">
+      <div class="container-fluid">
+        
+        <div class="card card-primary card-outline card-outline-tabs">
+          <div class="card-header p-0 border-bottom-0">
+            <ul class="nav nav-tabs" id="custom-tabs-four-tab" role="tablist">
+              <li class="nav-item">
+                <a class="nav-link active" data-toggle="pill" href="#tab-masuk" onclick="loadData('masuk')">
+                    <i class="fas fa-download text-success mr-1"></i> Barang Masuk
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" data-toggle="pill" href="#tab-keluar" onclick="loadData('keluar')">
+                    <i class="fas fa-upload text-danger mr-1"></i> Barang Keluar
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" data-toggle="pill" href="#tab-stok" onclick="loadStok()">
+                    <i class="fas fa-clipboard-list text-primary mr-1"></i> Stok Barang
+                </a>
+              </li>
+            </ul>
+          </div>
+          
+          <div class="card-body">
+            <div class="tab-content">
+              
+              <div class="tab-pane fade show active" id="tab-masuk">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="card bg-light">
+                            <div class="card-header border-0"><b>Input Barang Masuk</b></div>
+                            <div class="card-body pt-0">
+                                <form id="form-masuk">
+                                    <div class="form-group mb-2"><label>ID Barang / Kode</label><input type="text" class="form-control" id="m-id" placeholder="Cth: KB-001" required></div>
+                                    <div class="form-group mb-2"><label>Nama Barang</label><input type="text" class="form-control" id="m-nama" placeholder="Cth: Keyboard Logitech" required></div>
+                                    <div class="form-group mb-2"><label>Merk Barang</label><input type="text" class="form-control" id="m-merk" placeholder="Cth: Logitech" required></div>
+                                    <div class="form-group mb-2"><label>Jenis Barang</label>
+                                        <select class="form-control" id="m-jenis">
+                                            <option>Hardware</option><option>Network</option><option>Peripheral</option><option>Tools</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group mb-2"><label>Jumlah</label><input type="number" class="form-control" id="m-jumlah" min="1" required></div>
+                                    <div class="form-group mb-3"><label>Tanggal</label><input type="date" class="form-control" id="m-tanggal" required></div>
+                                    <button type="button" class="btn btn-success btn-block" onclick="simpanTransaksi('masuk')"><i class="fas fa-save"></i> Simpan Masuk</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-9">
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover">
+                                <thead class="bg-success">
+                                    <tr><th>Tgl</th><th>ID Barang</th><th>Nama Barang</th><th>Merk</th><th>Jenis</th><th>Jml</th><th>Aksi</th></tr>
+                                </thead>
+                                <tbody id="tabel-masuk"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+              </div>
+
+              <div class="tab-pane fade" id="tab-keluar">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="card bg-light">
+                            <div class="card-header border-0"><b>Input Barang Keluar</b></div>
+                            <div class="card-body pt-0">
+                                <div class="alert alert-warning p-2" style="font-size:12px">
+                                    <i class="fas fa-info-circle"></i> Pastikan <b>ID Barang</b> sama dengan ID saat barang masuk agar stok berkurang otomatis.
+                                </div>
+                                <form id="form-keluar">
+                                    <div class="form-group mb-2">
+                                        <label>ID Barang / Kode</label>
+                                        <input type="text" class="form-control" id="k-id" list="list-id-barang" placeholder="Cari ID..." onchange="autoFillNama()" required>
+                                        <datalist id="list-id-barang"></datalist>
+                                    </div>
+                                    <div class="form-group mb-2"><label>Nama Barang</label><input type="text" class="form-control" id="k-nama" required></div>
+                                    <div class="form-group mb-2"><label>Merk Barang</label><input type="text" class="form-control" id="k-merk" required></div>
+                                    <div class="form-group mb-2"><label>Jenis Barang</label>
+                                        <select class="form-control" id="k-jenis">
+                                            <option>Hardware</option><option>Network</option><option>Peripheral</option><option>Tools</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group mb-2"><label>Jumlah Keluar</label><input type="number" class="form-control" id="k-jumlah" min="1" required></div>
+                                    <div class="form-group mb-3"><label>Tanggal</label><input type="date" class="form-control" id="k-tanggal" required></div>
+                                    <button type="button" class="btn btn-danger btn-block" onclick="simpanTransaksi('keluar')"><i class="fas fa-save"></i> Simpan Keluar</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-9">
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover">
+                                <thead class="bg-danger">
+                                    <tr><th>Tgl</th><th>ID Barang</th><th>Nama Barang</th><th>Merk</th><th>Jenis</th><th>Jml</th><th>Aksi</th></tr>
+                                </thead>
+                                <tbody id="tabel-keluar"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+              </div>
+
+              <div class="tab-pane fade" id="tab-stok">
+                <div class="alert alert-info">
+                    <i class="fas fa-calculator"></i> Stok dihitung otomatis dari: <b>(Total Masuk per ID - Total Keluar per ID)</b>.
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped">
+                        <thead class="bg-primary">
+                            <tr>
+                                <th style="width:5%">No</th>
+                                <th>Nama Barang</th>
+                                <th>Merk Barang</th>
+                                <th>Jenis Barang</th>
+                                <th class="text-center">Jumlah Stok</th>
+                                <th class="text-center">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabel-stok"></tbody>
+                    </table>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+  <footer class="main-footer"><strong>Copyright &copy; 2025 USTI.</strong></footer>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="db.js"></script>
+
+<script>
+    if(session) document.getElementById('sidebar-name').innerText = session.nama;
+
+    $(document).ready(function() {
+        loadData('masuk');
+        document.getElementById('m-tanggal').valueAsDate = new Date();
+        document.getElementById('k-tanggal').valueAsDate = new Date();
+        loadDatalist(); // Load ID barang untuk autocomplete
+    });
+
+    // SIMPAN (Masuk/Keluar)
+    // --- FUNGSI SIMPAN TRANSAKSI (DENGAN VALIDASI STOK) ---
+    async function simpanTransaksi(tipe) {
+        const p = tipe === 'masuk' ? 'm' : 'k'; // prefix id input
+        
+        // Ambil value dari form
+        const idVal = document.getElementById(p+'-id').value.trim().toUpperCase();
+        const namaVal = document.getElementById(p+'-nama').value;
+        const merkVal = document.getElementById(p+'-merk').value;
+        const jenisVal = document.getElementById(p+'-jenis').value;
+        const jumlahVal = document.getElementById(p+'-jumlah').value;
+        const tanggalVal = document.getElementById(p+'-tanggal').value;
+
+        // Validasi Input Kosong
+        if(!idVal || !namaVal || !jumlahVal || !tanggalVal) {
+            Swal.fire('Data Tidak Lengkap', 'ID, Nama, Jumlah, dan Tanggal wajib diisi.', 'warning');
+            return;
+        }
+
+        const data = {
+            id_barang: idVal,
+            nama_barang: namaVal,
+            merk: merkVal,
+            jenis: jenisVal,
+            jumlah: Number(jumlahVal),
+            tanggal: tanggalVal,
+            created: new Date()
+        };
+
+        try {
+            // --- VALIDASI KHUSUS BARANG KELUAR ---
+            if (tipe === 'keluar') {
+                // 1. Ambil data stok terbaru dari database
+                const stockMap = await dbService.getStock();
+                
+                // 2. Cek apakah barang dengan ID ini ada di stok?
+                if (!stockMap[idVal]) {
+                    Swal.fire('Barang Tidak Ditemukan', `ID Barang <b>${idVal}</b> belum ada di stok barang masuk.`, 'error');
+                    return; // Stop proses
+                }
+
+                // 3. Cek apakah jumlah keluar melebihi stok?
+                const stokTersedia = stockMap[idVal].total;
+                
+                if (data.jumlah > stokTersedia) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Stok Tidak Cukup!',
+                        html: `Stok saat ini: <b>${stokTersedia}</b> unit.<br>Permintaan keluar: <b>${data.jumlah}</b> unit.<br><br>Silakan kurangi jumlah barang keluar.`
+                    });
+                    return; // Stop proses, jangan simpan ke DB
+                }
+            }
+            // -------------------------------------
+
+            // Jika lolos validasi, simpan ke database
+            await dbService.addTransaction(tipe, data);
+            
+            Swal.fire('Sukses', `Data barang ${tipe} berhasil disimpan!`, 'success');
+            
+            // Reset Form
+            document.getElementById(p+'-id').value = '';
+            document.getElementById(p+'-nama').value = '';
+            document.getElementById(p+'-merk').value = '';
+            document.getElementById(p+'-jumlah').value = '';
+            
+            // Refresh Tabel & Datalist
+            loadData(tipe);
+            loadDatalist(); 
+            
+        } catch (e) {
+            console.error(e);
+            Swal.fire('Error', 'Gagal menyimpan database', 'error');
+        }
+    }
+    // LOAD DATA TABEL
+    async function loadData(tipe) {
+        const tbody = document.getElementById('tabel-' + tipe);
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center">Memuat...</td></tr>';
+
+        try {
+            const data = await dbService.getTransactions(tipe);
+            data.sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal)); // Urutkan tanggal terbaru
+
+            tbody.innerHTML = '';
+            if (data.length === 0) tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">Belum ada data.</td></tr>';
+            
+            data.forEach(item => {
+                const tgl = item.tanggal.split('-').reverse().join('-'); // Format DD-MM-YYYY
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${tgl}</td>
+                        <td><b>${item.id_barang}</b></td>
+                        <td>${item.nama_barang}</td>
+                        <td>${item.merk}</td>
+                        <td>${item.jenis}</td>
+                        <td class="text-center">${item.jumlah}</td>
+                        <td class="text-center">
+                            <button class="btn btn-xs btn-danger" onclick="hapusItem('${tipe}', ${item.id})"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+        } catch (e) { console.error(e); }
+    }
+
+    // LOAD STOK (AGREGASI)
+    async function loadStok() {
+        const tbody = document.getElementById('tabel-stok');
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center">Menghitung...</td></tr>';
+
+        try {
+            const stockMap = await dbService.getStock();
+            tbody.innerHTML = '';
+            let no = 1;
+
+            // Jika kosong
+            if(Object.keys(stockMap).length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Stok Kosong</td></tr>';
+                return;
+            }
+
+            for (const key in stockMap) {
+                const item = stockMap[key];
+                
+                // Logic Badge Status
+                let badge = '<span class="badge badge-success">Aman</span>';
+                if(item.total <= 0) badge = '<span class="badge badge-danger">Habis</span>';
+                else if(item.total < 5) badge = '<span class="badge badge-warning">Menipis</span>';
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${no++}</td>
+                        <td>${item.nama}</td>
+                        <td>${item.merk}</td>
+                        <td>${item.jenis}</td>
+                        <td class="text-center font-weight-bold" style="font-size:1.1em">${item.total}</td>
+                        <td class="text-center">${badge}</td>
+                    </tr>
+                `;
+            }
+        } catch (e) { console.error(e); }
+    }
+
+    // FITUR BANTU: AUTOCOMPLETE SAAT BARANG KELUAR
+    // Biar user ga capek ngetik ulang merk/jenis saat input barang keluar
+    async function loadDatalist() {
+        const data = await dbService.getTransactions('masuk');
+        // Ambil ID Unik dan datanya
+        const uniqueItems = {};
+        data.forEach(d => {
+            uniqueItems[d.id_barang] = { nama: d.nama_barang, merk: d.merk, jenis: d.jenis };
+        });
+
+        const datalist = document.getElementById('list-id-barang');
+        datalist.innerHTML = '';
+        for (const id in uniqueItems) {
+            datalist.innerHTML += `<option value="${id}">${uniqueItems[id].nama} (${uniqueItems[id].merk})</option>`;
+        }
+        // Simpan referensi global untuk autofill
+        window.itemDatabase = uniqueItems;
+    }
+
+    function autoFillNama() {
+        const idInput = document.getElementById('k-id').value.toUpperCase();
+        if(window.itemDatabase && window.itemDatabase[idInput]) {
+            const item = window.itemDatabase[idInput];
+            document.getElementById('k-nama').value = item.nama;
+            document.getElementById('k-merk').value = item.merk;
+            document.getElementById('k-jenis').value = item.jenis;
+        }
+    }
+
+    function hapusItem(tipe, id) {
+        if(confirm("Hapus data? Stok akan berubah.")) {
+            dbService.deleteTransaction(tipe, id).then(() => {
+                loadData(tipe);
+                loadDatalist();
+            });
+        }
+    }
+
+    function logout() {
+        if(confirm("Logout?")) { localStorage.removeItem('user_session'); window.location.href = 'login.html'; }
+    }
+</script>
+</body>
+</html>

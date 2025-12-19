@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="utf-8">
+    <title>Register Darurat</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+</head>
+<body class="bg-light">
+
+<div class="container mt-5">
+    <div class="card mx-auto" style="max-width: 400px;">
+        <div class="card-header bg-danger text-white">Buat User Baru (Darurat)</div>
+        <div class="card-body">
+            <div class="form-group">
+                <label>Username</label>
+                <input type="text" id="reg-nama" class="form-control" placeholder="admin / tkj / uks">
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="text" id="reg-pass" class="form-control" placeholder="123">
+            </div>
+            <div class="form-group">
+                <label>Role (Peran)</label>
+                <select id="reg-role" class="form-control">
+                    <option value="admin">Admin Utama</option>
+                    <option value="tkj">Petugas TKJ</option>
+                    <option value="uks">Petugas UKS</option>
+                    <option value="sarpras">Petugas Sarpras</option>
+                </select>
+            </div>
+            <button onclick="register()" class="btn btn-primary btn-block">Buat Akun</button>
+            <a href="login.html" class="btn btn-link btn-block">Kembali ke Login</a>
+        </div>
+    </div>
+</div>
+
+<script src="db.js"></script>
+<script>
+    async function register() {
+        const nama = document.getElementById('reg-nama').value;
+        const pass = document.getElementById('reg-pass').value;
+        const role = document.getElementById('reg-role').value;
+
+        if(!nama || !pass) return alert("Isi semua data!");
+
+        try {
+            await dbService.register({
+                nama: nama,
+                password: pass,
+                role: role,
+                created: new Date()
+            });
+            alert("User Berhasil Dibuat! Silakan Login.");
+        } catch (e) {
+            alert("Gagal: " + e);
+        }
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Manajemen Obat | UKS</title>
+
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+</head>
+
+<body class="hold-transition sidebar-mini layout-fixed">
+<script>
+    const session = JSON.parse(localStorage.getItem('user_session'));
+    if (!session || session.role !== 'uks') { window.location.href = 'login.html'; }
+</script>
+
+<div class="wrapper">
+  <nav class="main-header navbar navbar-expand navbar-white navbar-light">
+    <ul class="navbar-nav"><li class="nav-item"><a class="nav-link" data-widget="pushmenu" href="#"><i class="fas fa-bars"></i></a></li></ul>
+    <ul class="navbar-nav ml-auto"><li class="nav-item"><a class="nav-link" href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</a></li></ul>
+  </nav>
+
+  <aside class="main-sidebar sidebar-dark-success elevation-4">
+    <a href="#" class="brand-link"><span class="brand-text font-weight-light pl-3">Panel <b>UKS</b></span></a>
+    <div class="sidebar">
+      <div class="user-panel mt-3 pb-3 mb-3 d-flex">
+        <div class="image"><img src="https://cdn-icons-png.flaticon.com/512/3048/3048122.png" class="img-circle elevation-2"></div>
+        <div class="info"><a href="#" class="d-block" id="sidebar-name">User</a></div>
+      </div>
+      <nav class="mt-2">
+        <ul class="nav nav-pills nav-sidebar flex-column">
+          <li class="nav-item"><a href="dashboard_uks.html" class="nav-link"><i class="nav-icon fas fa-heartbeat"></i><p>Dashboard</p></a></li>
+          <li class="nav-item"><a href="manajemen_obat.html" class="nav-link active"><i class="nav-icon fas fa-pills"></i><p>Manajemen Obat</p></a></li>
+        </ul>
+      </nav>
+    </div>
+  </aside>
+
+  <div class="content-wrapper">
+    <section class="content-header">
+      <div class="container-fluid"><h1>Manajemen Obat & Stok</h1></div>
+    </section>
+
+    <section class="content">
+      <div class="container-fluid">
+        
+        <div class="card card-success card-outline card-outline-tabs">
+          <div class="card-header p-0 border-bottom-0">
+            <ul class="nav nav-tabs" role="tablist">
+              <li class="nav-item"><a class="nav-link active" data-toggle="pill" href="#tab-masuk" onclick="loadData('obat_masuk')">Obat Masuk</a></li>
+              <li class="nav-item"><a class="nav-link" data-toggle="pill" href="#tab-keluar" onclick="loadData('obat_keluar')">Obat Keluar</a></li>
+              <li class="nav-item"><a class="nav-link" data-toggle="pill" href="#tab-stok" onclick="loadStok()">Stok Obat</a></li>
+            </ul>
+          </div>
+          
+          <div class="card-body">
+            <div class="tab-content">
+              
+              <div class="tab-pane fade show active" id="tab-masuk">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="card bg-light">
+                            <div class="card-body pt-2">
+                                <form id="form-masuk">
+                                    <div class="form-group mb-2"><label>Kode Obat</label><input type="text" class="form-control" id="m-id" placeholder="Cth: PAR-500" required></div>
+                                    <div class="form-group mb-2"><label>Nama Obat</label><input type="text" class="form-control" id="m-nama" placeholder="Cth: Paracetamol" required></div>
+                                    <div class="form-group mb-2"><label>Jenis</label>
+                                        <select class="form-control" id="m-jenis">
+                                            <option>Tablet</option><option>Kapsul</option><option>Sirup</option><option>Salep</option><option>Alat Medis</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group mb-2"><label>Satuan</label>
+                                        <select class="form-control" id="m-satuan">
+                                            <option>Strip</option><option>Botol</option><option>Pcs</option><option>Box</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group mb-2"><label>Jumlah Masuk</label><input type="number" class="form-control" id="m-jumlah" min="1" required></div>
+                                    <div class="form-group mb-3"><label class="text-danger">Kadaluarsa</label><input type="date" class="form-control" id="m-exp" required></div>
+                                    <button type="button" class="btn btn-success btn-block" onclick="simpan('obat_masuk')">Simpan</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-9">
+                        <table class="table table-bordered table-striped">
+                            <thead class="bg-success"><tr><th>Tgl Input</th><th>Kode</th><th>Nama</th><th>Jenis</th><th>Jml</th><th>Exp Date</th><th>Aksi</th></tr></thead>
+                            <tbody id="tabel-obat_masuk"></tbody>
+                        </table>
+                    </div>
+                </div>
+              </div>
+
+              <div class="tab-pane fade" id="tab-keluar">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="card bg-light">
+                            <div class="card-body pt-2">
+                                <form id="form-keluar">
+                                    <div class="form-group mb-2">
+                                        <label>Kode Obat</label>
+                                        <input type="text" class="form-control" id="k-id" list="list-kode-obat" placeholder="Cari Kode..." onchange="autoFill()" required>
+                                        <datalist id="list-kode-obat"></datalist>
+                                    </div>
+                                    <div class="form-group mb-2"><label>Nama Obat</label><input type="text" class="form-control" id="k-nama" readonly></div>
+                                    <div class="form-group mb-2"><label>Jumlah Keluar</label><input type="number" class="form-control" id="k-jumlah" min="1" required></div>
+                                    <div class="form-group mb-2"><label>Penerima / Pasien</label><input type="text" class="form-control" id="k-penerima" placeholder="Nama Siswa/Guru"></div>
+                                    <div class="form-group mb-3"><label>Tanggal</label><input type="date" class="form-control" id="k-tanggal" required></div>
+                                    <button type="button" class="btn btn-danger btn-block" onclick="simpan('obat_keluar')">Simpan Keluar</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-9">
+                        <table class="table table-bordered table-striped">
+                            <thead class="bg-danger"><tr><th>Tgl</th><th>Kode</th><th>Nama</th><th>Jml</th><th>Penerima</th><th>Aksi</th></tr></thead>
+                            <tbody id="tabel-obat_keluar"></tbody>
+                        </table>
+                    </div>
+                </div>
+              </div>
+
+              <div class="tab-pane fade" id="tab-stok">
+                <div class="alert alert-info"><i class="fas fa-info-circle"></i> Stok Obat dihitung otomatis. Perhatikan tanggal kadaluarsa di tab Masuk.</div>
+                <table class="table table-bordered table-hover">
+                    <thead class="bg-primary">
+                        <tr>
+                            <th>No</th><th>Kode</th><th>Nama Obat</th><th>Jenis</th><th>Satuan</th>
+                            <th class="text-center">Sisa Stok</th><th class="text-center">Exp. Terdekat</th><th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabel-stok"></tbody>
+                </table>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+  <footer class="main-footer"><strong>Copyright &copy; 2025 USTI.</strong></footer>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="db.js"></script>
+
+<script>
+    if(session) document.getElementById('sidebar-name').innerText = session.nama;
+
+    $(document).ready(function() {
+        loadData('obat_masuk');
+        document.getElementById('k-tanggal').valueAsDate = new Date();
+        loadDatalist();
+    });
+
+    async function simpan(tipe) {
+        const p = tipe === 'obat_masuk' ? 'm' : 'k'; 
+        
+        const data = {
+            id_obat: document.getElementById(p+'-id').value.trim().toUpperCase(),
+            nama_obat: document.getElementById(p+'-nama').value,
+            jumlah: Number(document.getElementById(p+'-jumlah').value),
+            created: new Date().toISOString().split('T')[0] // Tgl Input hari ini
+        };
+
+        if(tipe === 'obat_masuk') {
+            data.jenis = document.getElementById('m-jenis').value;
+            data.satuan = document.getElementById('m-satuan').value;
+            data.kadaluarsa = document.getElementById('m-exp').value;
+            
+            if(!data.id_obat || !data.nama_obat || !data.jumlah || !data.kadaluarsa) {
+                return Swal.fire('Error', 'Lengkapi semua data termasuk tgl kadaluarsa!', 'warning');
+            }
+        } else {
+            // Obat Keluar
+            data.penerima = document.getElementById('k-penerima').value;
+            data.tanggal = document.getElementById('k-tanggal').value;
+
+            // VALIDASI STOK
+            const stockMap = await dbService.getStockObat();
+            if (!stockMap[data.id_obat]) return Swal.fire('Gagal', 'Kode Obat tidak ditemukan di stok.', 'error');
+            if (data.jumlah > stockMap[data.id_obat].total) return Swal.fire('Stok Kurang', `Sisa stok: ${stockMap[data.id_obat].total}`, 'error');
+        }
+
+        try {
+            await dbService.addTransaction(tipe, data);
+            Swal.fire('Sukses', 'Data disimpan', 'success');
+            
+            // Reset Simple
+            document.getElementById(p+'-id').value = '';
+            document.getElementById(p+'-nama').value = '';
+            document.getElementById(p+'-jumlah').value = '';
+            
+            loadData(tipe);
+            loadDatalist();
+        } catch (e) { console.error(e); }
+    }
+
+    async function loadData(tipe) {
+        const tbody = document.getElementById('tabel-' + tipe);
+        tbody.innerHTML = '<tr><td colspan="7">Memuat...</td></tr>';
+        const data = await dbService.getTransactions(tipe);
+        tbody.innerHTML = '';
+
+        if(data.length === 0) tbody.innerHTML = '<tr><td colspan="7" class="text-center">Kosong</td></tr>';
+
+        data.forEach(d => {
+            let row = `<td>${d.created || d.tanggal}</td><td><b>${d.id_obat}</b></td><td>${d.nama_obat}</td>`;
+            
+            if(tipe === 'obat_masuk') {
+                row += `<td>${d.jenis}</td><td>${d.jumlah} ${d.satuan}</td><td class="text-danger">${d.kadaluarsa}</td>`;
+            } else {
+                row += `<td>${d.jumlah}</td><td>${d.penerima || '-'}</td>`;
+            }
+            
+            row += `<td><button class="btn btn-xs btn-danger" onclick="hapus('${tipe}', ${d.id})"><i class="fas fa-trash"></i></button></td>`;
+            tbody.innerHTML += `<tr>${row}</tr>`;
+        });
+    }
+
+    async function loadStok() {
+        const tbody = document.getElementById('tabel-stok');
+        const map = await dbService.getStockObat();
+        tbody.innerHTML = '';
+        let no = 1;
+
+        if(Object.keys(map).length === 0) tbody.innerHTML = '<tr><td colspan="8" class="text-center">Stok Kosong</td></tr>';
+
+        for (const k in map) {
+            const i = map[k];
+            let badge = i.total > 10 ? '<span class="badge badge-success">Aman</span>' : '<span class="badge badge-warning">Menipis</span>';
+            if(i.total <= 0) badge = '<span class="badge badge-danger">Habis</span>';
+
+            tbody.innerHTML += `<tr><td>${no++}</td><td>${i.id_obat}</td><td>${i.nama_obat}</td><td>${i.jenis}</td><td>${i.satuan}</td><td class="text-center font-weight-bold">${i.total}</td><td class="text-center">${i.kadaluarsa}</td><td class="text-center">${badge}</td></tr>`;
+        }
+    }
+
+    async function loadDatalist() {
+        const map = await dbService.getStockObat();
+        const dl = document.getElementById('list-kode-obat');
+        dl.innerHTML = '';
+        window.obatDb = map;
+        for(const k in map) dl.innerHTML += `<option value="${k}">${map[k].nama_obat}</option>`;
+    }
+
+    function autoFill() {
+        const id = document.getElementById('k-id').value.toUpperCase();
+        if(window.obatDb && window.obatDb[id]) {
+            document.getElementById('k-nama').value = window.obatDb[id].nama_obat;
+        }
+    }
+
+    function hapus(tipe, id) {
+        if(confirm("Hapus?")) dbService.deleteTransaction(tipe, id).then(() => { loadData(tipe); loadDatalist(); });
+    }
+
+    function logout() {
+        if(confirm("Logout?")) { localStorage.removeItem('user_session'); window.location.href = 'login.html'; }
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Manajemen Labor | USTI</title>
+
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+
+  <style>
+      /* Style khusus tabel agar mirip gambar */
+      .table-labor thead th {
+          vertical-align: middle;
+          text-align: center;
+          background-color: #ffeb3b; /* Warna Kuning */
+          color: #000;
+          font-weight: bold;
+          border: 1px solid #999;
+      }
+      .table-labor tbody td {
+          vertical-align: middle;
+      }
+  </style>
+</head>
+
+<body class="hold-transition sidebar-mini layout-fixed">
+<script>
+    const session = JSON.parse(localStorage.getItem('user_session'));
+    if (!session || session.role !== 'tkj') { window.location.href = 'login.html'; }
+</script>
+
+<div class="wrapper">
+  <nav class="main-header navbar navbar-expand navbar-white navbar-light">
+    <ul class="navbar-nav"><li class="nav-item"><a class="nav-link" data-widget="pushmenu" href="#"><i class="fas fa-bars"></i></a></li></ul>
+    <ul class="navbar-nav ml-auto"><li class="nav-item"><a class="nav-link" href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</a></li></ul>
+  </nav>
+
+  <aside class="main-sidebar sidebar-dark-info elevation-4">
+    <a href="#" class="brand-link"><span class="brand-text font-weight-light pl-3">Panel <b>TKJ</b></span></a>
+    <div class="sidebar">
+      <div class="user-panel mt-3 pb-3 mb-3 d-flex">
+        <div class="image"><img src="https://cdn-icons-png.flaticon.com/512/3048/3048122.png" class="img-circle elevation-2"></div>
+        <div class="info"><a href="#" class="d-block" id="sidebar-name">User</a></div>
+      </div>
+      <nav class="mt-2">
+        <ul class="nav nav-pills nav-sidebar flex-column">
+          <li class="nav-item"><a href="dashboard_tkj.html" class="nav-link"><i class="nav-icon fas fa-tachometer-alt"></i><p>Dashboard</p></a></li>
+          <li class="nav-item"><a href="inventaris_tkj.html" class="nav-link"><i class="nav-icon fas fa-boxes"></i><p>Inventaris Barang</p></a></li>
+          <li class="nav-item"><a href="manajemen_labor.html" class="nav-link active"><i class="nav-icon fas fa-desktop"></i><p>Komputer Labor</p></a></li>
+        </ul>
+      </nav>
+    </div>
+  </aside>
+
+  <div class="content-wrapper">
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6"><h1>Spesifikasi Komputer Labor</h1></div>
+            <div class="col-sm-6">
+                <button class="btn btn-primary float-sm-right" onclick="openModal()">
+                    <i class="fas fa-plus"></i> Tambah Data PC
+                </button>
+            </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="content">
+      <div class="container-fluid">
+        <div class="card">
+          <div class="card-body table-responsive p-0">
+            
+            <table class="table table-bordered table-labor text-nowrap">
+              <thead>
+                <tr>
+                    <th rowspan="2" style="width: 5%">NO. PC</th>
+                    <th rowspan="2">MONITOR</th>
+                    <th colspan="7">KOMPONEN CPU</th> <th rowspan="2">KETERANGAN</th>
+                    <th rowspan="2">AKSI</th>
+                </tr>
+                <tr>
+                    <th>MOTHERBOARD</th>
+                    <th>PROCESSOR</th>
+                    <th>RAM</th>
+                    <th>HDD/SSD</th>
+                    <th>VGA</th>
+                    <th>PSU</th>
+                    <th>FAN</th>
+                </tr>
+              </thead>
+              <tbody id="tabel-body">
+                  </tbody>
+            </table>
+
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+  <footer class="main-footer"><strong>Copyright &copy; 2025 USTI.</strong></footer>
+</div>
+
+<div class="modal fade" id="modalPC">
+    <div class="modal-dialog modal-lg"> <div class="modal-content">
+        <div class="modal-header bg-info">
+          <h4 class="modal-title" id="modalTitle">Tambah Data PC</h4>
+          <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+        </div>
+        <div class="modal-body">
+          <form id="formPC">
+            <input type="hidden" id="in-id"> <div class="row">
+                <div class="col-md-4">
+                    <div class="form-group"><label>No. PC</label><input type="text" class="form-control" id="in-no" placeholder="Cth: PC-LAB1-01" required></div>
+                    <div class="form-group"><label>Monitor</label><input type="text" class="form-control" id="in-monitor" placeholder="Merk/Ukuran"></div>
+                    <div class="form-group"><label>Keterangan</label><textarea class="form-control" id="in-ket" rows="3" placeholder="Kondisi PC..."></textarea></div>
+                </div>
+                <div class="col-md-4">
+                    <h6 class="text-primary font-weight-bold">Komponen Utama</h6>
+                    <div class="form-group"><label>Motherboard</label><input type="text" class="form-control" id="in-mobo"></div>
+                    <div class="form-group"><label>Processor</label><input type="text" class="form-control" id="in-proc"></div>
+                    <div class="form-group"><label>RAM</label><input type="text" class="form-control" id="in-ram"></div>
+                    <div class="form-group"><label>HDD/SSD</label><input type="text" class="form-control" id="in-storage"></div>
+                </div>
+                <div class="col-md-4">
+                    <h6 class="text-primary font-weight-bold">Komponen Tambahan</h6>
+                    <div class="form-group"><label>VGA</label><input type="text" class="form-control" id="in-vga" placeholder="-"></div>
+                    <div class="form-group"><label>PSU</label><input type="text" class="form-control" id="in-psu"></div>
+                    <div class="form-group"><label>Fan</label><input type="text" class="form-control" id="in-fan" placeholder="-"></div>
+                </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer justify-content-between">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Batal</button>
+          <button type="button" class="btn btn-primary" onclick="simpanData()">Simpan Data</button>
+        </div>
+      </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="db.js"></script>
+
+<script>
+    if(session) document.getElementById('sidebar-name').innerText = session.nama;
+
+    $(document).ready(function() {
+        loadTable();
+    });
+
+    async function loadTable() {
+        const tbody = document.getElementById('tabel-body');
+        tbody.innerHTML = '<tr><td colspan="11" class="text-center">Memuat data...</td></tr>';
+        
+        try {
+            const data = await dbService.getAllPC();
+            // Urutkan berdasarkan No PC
+            data.sort((a, b) => a.no_pc.localeCompare(b.no_pc));
+
+            tbody.innerHTML = '';
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="11" class="text-center">Belum ada data komputer.</td></tr>';
+                return;
+            }
+
+            data.forEach(item => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td class="font-weight-bold">${item.no_pc}</td>
+                        <td>${item.monitor}</td>
+                        <td>${item.motherboard}</td>
+                        <td>${item.processor}</td>
+                        <td>${item.ram}</td>
+                        <td>${item.storage}</td>
+                        <td>${item.vga || '-'}</td>
+                        <td>${item.psu}</td>
+                        <td>${item.fan || '-'}</td>
+                        <td>${item.keterangan || '-'}</td>
+                        <td class="text-center">
+                            <button class="btn btn-xs btn-info" onclick="editPC(${item.id})"><i class="fas fa-edit"></i></button>
+                            <button class="btn btn-xs btn-danger" onclick="hapusPC(${item.id})"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    function openModal() {
+        // Reset Form
+        $('#formPC')[0].reset();
+        $('#in-id').val('');
+        $('#modalTitle').text('Tambah Data PC');
+        $('#modalPC').modal('show');
+    }
+
+    async function simpanData() {
+        const id = $('#in-id').val();
+        const data = {
+            no_pc: $('#in-no').val().trim().toUpperCase(),
+            monitor: $('#in-monitor').val(),
+            keterangan: $('#in-ket').val(),
+            motherboard: $('#in-mobo').val(),
+            processor: $('#in-proc').val(),
+            ram: $('#in-ram').val(),
+            storage: $('#in-storage').val(),
+            vga: $('#in-vga').val(),
+            psu: $('#in-psu').val(),
+            fan: $('#in-fan').val()
+        };
+
+        if(!data.no_pc || !data.motherboard || !data.processor) {
+            return Swal.fire('Gagal', 'No PC, Motherboard, dan Processor wajib diisi!', 'warning');
+        }
+
+        try {
+            if(id) {
+                // Update
+                data.id = Number(id);
+                await dbService.updatePC(data);
+                Swal.fire('Sukses', 'Data diperbarui', 'success');
+            } else {
+                // Insert
+                await dbService.addPC(data);
+                Swal.fire('Sukses', 'PC Baru ditambahkan', 'success');
+            }
+            $('#modalPC').modal('hide');
+            loadTable();
+        } catch (e) {
+            Swal.fire('Error', 'Gagal simpan (Mungkin No. PC sudah ada)', 'error');
+        }
+    }
+
+    async function editPC(id) {
+        const pc = await dbService.getPCById(id);
+        if(pc) {
+            $('#in-id').val(pc.id);
+            $('#in-no').val(pc.no_pc);
+            $('#in-monitor').val(pc.monitor);
+            $('#in-ket').val(pc.keterangan);
+            $('#in-mobo').val(pc.motherboard);
+            $('#in-proc').val(pc.processor);
+            $('#in-ram').val(pc.ram);
+            $('#in-storage').val(pc.storage);
+            $('#in-vga').val(pc.vga);
+            $('#in-psu').val(pc.psu);
+            $('#in-fan').val(pc.fan);
+            
+            $('#modalTitle').text('Edit Spesifikasi PC');
+            $('#modalPC').modal('show');
+        }
+    }
+
+    function hapusPC(id) {
+        if(confirm("Hapus data PC ini?")) {
+            dbService.deletePC(id).then(() => loadTable());
+        }
+    }
+
+    function logout() {
+        if(confirm("Logout?")) { localStorage.removeItem('user_session'); window.location.href = 'login.html'; }
+    }
+</script>
+</body>
+</html>
