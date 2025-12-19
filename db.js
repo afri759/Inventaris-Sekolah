@@ -1,5 +1,5 @@
 const DB_NAME = 'AppSekolahDB';
-const DB_VERSION = 10; // Naik ke Versi 10 (User + TKJ + UKS + Sarpras + Labor + Pasien)
+const DB_VERSION = 11; // Naik ke Versi 10 (User + TKJ + UKS + Sarpras + Labor + Pasien)
 
 // --- DAFTAR STORE ---
 const STORE_USERS = 'users';
@@ -126,3 +126,4 @@ if ('serviceWorker' in navigator) {
             .catch(err => console.log('Gagal daftar Service Worker:', err));
     });
 }
+
