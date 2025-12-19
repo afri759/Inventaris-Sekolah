@@ -1,5 +1,5 @@
 const DB_NAME = 'AppSekolahDB';
-const DB_VERSION = 9; // Naik ke Versi 9 (User + TKJ + UKS + Sarpras + Labor)
+const DB_VERSION = 10; // Naik ke Versi 10 (User + TKJ + UKS + Sarpras + Labor + Pasien)
 
 // --- DAFTAR STORE ---
 const STORE_USERS = 'users';
@@ -9,7 +9,8 @@ const STORE_OBAT_IN = 'obat_masuk';
 const STORE_OBAT_OUT = 'obat_keluar';
 const STORE_SARPRAS_IN = 'sarpras_masuk';
 const STORE_SARPRAS_OUT = 'sarpras_keluar';
-const STORE_LABOR = 'labor_pc'; // BARU: Untuk Spesifikasi PC
+const STORE_LABOR = 'labor_pc';
+const STORE_PASIEN = 'uks_pasien'; // BARU: Data Pasien
 
 const dbService = {
     openDB: function() {
@@ -19,22 +20,19 @@ const dbService = {
             request.onupgradeneeded = (event) => {
                 const db = event.target.result;
                 
-                // Store yg sudah ada (User, TKJ, UKS, Sarpras) ...
-                if (!db.objectStoreNames.contains(STORE_USERS)) {
-                    const s = db.createObjectStore(STORE_USERS, { keyPath: 'id_user', autoIncrement: true });
-                    s.createIndex('nama', 'nama', { unique: true });
-                }
+                // Store yg sudah ada...
+                if (!db.objectStoreNames.contains(STORE_USERS)) { const s = db.createObjectStore(STORE_USERS, { keyPath: 'id_user', autoIncrement: true }); s.createIndex('nama', 'nama', { unique: true }); }
                 if (!db.objectStoreNames.contains(STORE_IN)) db.createObjectStore(STORE_IN, { keyPath: 'id', autoIncrement: true });
                 if (!db.objectStoreNames.contains(STORE_OUT)) db.createObjectStore(STORE_OUT, { keyPath: 'id', autoIncrement: true });
                 if (!db.objectStoreNames.contains(STORE_OBAT_IN)) db.createObjectStore(STORE_OBAT_IN, { keyPath: 'id', autoIncrement: true });
                 if (!db.objectStoreNames.contains(STORE_OBAT_OUT)) db.createObjectStore(STORE_OBAT_OUT, { keyPath: 'id', autoIncrement: true });
                 if (!db.objectStoreNames.contains(STORE_SARPRAS_IN)) db.createObjectStore(STORE_SARPRAS_IN, { keyPath: 'id', autoIncrement: true });
                 if (!db.objectStoreNames.contains(STORE_SARPRAS_OUT)) db.createObjectStore(STORE_SARPRAS_OUT, { keyPath: 'id', autoIncrement: true });
+                if (!db.objectStoreNames.contains(STORE_LABOR)) { const s = db.createObjectStore(STORE_LABOR, { keyPath: 'id', autoIncrement: true }); s.createIndex('no_pc', 'no_pc', { unique: true }); }
 
-                // --- STORE BARU: LABOR PC ---
-                if (!db.objectStoreNames.contains(STORE_LABOR)) {
-                    const store = db.createObjectStore(STORE_LABOR, { keyPath: 'id', autoIncrement: true });
-                    store.createIndex('no_pc', 'no_pc', { unique: true }); // No PC harus unik (PC-01, PC-02)
+                // --- STORE BARU: PASIEN UKS ---
+                if (!db.objectStoreNames.contains(STORE_PASIEN)) {
+                    db.createObjectStore(STORE_PASIEN, { keyPath: 'id', autoIncrement: true });
                 }
             };
 
@@ -43,8 +41,8 @@ const dbService = {
         });
     },
 
-    // --- FITUR UMUM (Register, Login, CRUD User, Transaksi) ---
-    // (Kode ini sama persis seperti sebelumnya, saya singkat agar fokus ke fitur baru)
+    // --- FITUR UMUM (User, Transaksi, Stok, Labor) ---
+    // (Kode disingkat agar tidak terlalu panjang, fungsinya SAMA PERSIS seperti sebelumnya)
     register: async function(u) { const db=await this.openDB(); return new Promise((r,j)=>{ db.transaction([STORE_USERS],'readwrite').objectStore(STORE_USERS).add(u).onsuccess=()=>r("Ok"); db.transaction([STORE_USERS],'readwrite').onerror=()=>j("Gagal"); }); },
     login: async function(n,p) { const db=await this.openDB(); return new Promise((r,j)=>{ db.transaction([STORE_USERS],'readonly').objectStore(STORE_USERS).index('nama').get(n).onsuccess=(e)=>{ const u=e.target.result; if(u&&u.password===p)r(u); else j("Gagal"); }; }); },
     getAllUsers: async function() { const db=await this.openDB(); return new Promise(r=>db.transaction([STORE_USERS],'readonly').objectStore(STORE_USERS).getAll().onsuccess=e=>r(e.target.result)); },
@@ -67,70 +65,47 @@ const dbService = {
         let sn = (type=='masuk')?STORE_IN:(type=='keluar')?STORE_OUT:(type=='obat_masuk')?STORE_OBAT_IN:(type=='obat_keluar')?STORE_OBAT_OUT:(type=='sarpras_masuk')?STORE_SARPRAS_IN:STORE_SARPRAS_OUT;
         return new Promise(r=>db.transaction([sn],'readwrite').objectStore(sn).delete(id).onsuccess=()=>r(true));
     },
-    _calculateStock: async function(sIn, sOut) {
-        const db=await this.openDB(); const m=await new Promise(r=>db.transaction([sIn],'readonly').objectStore(sIn).getAll().onsuccess=e=>r(e.target.result)); const k=await new Promise(r=>db.transaction([sOut],'readonly').objectStore(sOut).getAll().onsuccess=e=>r(e.target.result));
-        let map={}; m.forEach(i=>{ let key=i.id_barang.toUpperCase(); if(!map[key])map[key]={...i,total:0}; map[key].total+=Number(i.jumlah); }); k.forEach(i=>{ let key=i.id_barang.toUpperCase(); if(map[key])map[key].total-=Number(i.jumlah); }); return map;
-    },
+    // Fungsi Stok
+    _calculateStock: async function(sIn, sOut) { const db=await this.openDB(); const m=await new Promise(r=>db.transaction([sIn],'readonly').objectStore(sIn).getAll().onsuccess=e=>r(e.target.result)); const k=await new Promise(r=>db.transaction([sOut],'readonly').objectStore(sOut).getAll().onsuccess=e=>r(e.target.result)); let map={}; m.forEach(i=>{ let key=i.id_barang.toUpperCase(); if(!map[key])map[key]={...i,total:0}; map[key].total+=Number(i.jumlah); }); k.forEach(i=>{ let key=i.id_barang.toUpperCase(); if(map[key])map[key].total-=Number(i.jumlah); }); return map; },
     getStock: async function() { return this._calculateStock(STORE_IN, STORE_OUT); },
     getStockSarpras: async function() { return this._calculateStock(STORE_SARPRAS_IN, STORE_SARPRAS_OUT); },
-    getStockObat: async function() { /* ...sama seperti sebelumnya... */ 
-        const db=await this.openDB(); const m=await new Promise(r=>db.transaction([STORE_OBAT_IN],'readonly').objectStore(STORE_OBAT_IN).getAll().onsuccess=e=>r(e.target.result)); const k=await new Promise(r=>db.transaction([STORE_OBAT_OUT],'readonly').objectStore(STORE_OBAT_OUT).getAll().onsuccess=e=>r(e.target.result));
-        let map={}; m.forEach(i=>{ let key=i.id_obat.toUpperCase(); if(!map[key])map[key]={...i,total:0}; map[key].total+=Number(i.jumlah); }); k.forEach(i=>{ let key=i.id_obat.toUpperCase(); if(map[key])map[key].total-=Number(i.jumlah); }); return map;
-    },
+    getStockObat: async function() { const db=await this.openDB(); const m=await new Promise(r=>db.transaction([STORE_OBAT_IN],'readonly').objectStore(STORE_OBAT_IN).getAll().onsuccess=e=>r(e.target.result)); const k=await new Promise(r=>db.transaction([STORE_OBAT_OUT],'readonly').objectStore(STORE_OBAT_OUT).getAll().onsuccess=e=>r(e.target.result)); let map={}; m.forEach(i=>{ let key=i.id_obat.toUpperCase(); if(!map[key])map[key]={...i,total:0}; map[key].total+=Number(i.jumlah); }); k.forEach(i=>{ let key=i.id_obat.toUpperCase(); if(map[key])map[key].total-=Number(i.jumlah); }); return map; },
+    
+    // Fungsi Labor PC
+    addPC: async function(d){ const db=await this.openDB(); return new Promise((r,j)=>{ const tx=db.transaction([STORE_LABOR],'readwrite'); tx.objectStore(STORE_LABOR).add(d).onsuccess=()=>r("Ok"); tx.objectStore(STORE_LABOR).onerror=()=>j("Gagal"); }); },
+    getAllPC: async function(){ const db=await this.openDB(); return new Promise(r=>db.transaction([STORE_LABOR],'readonly').objectStore(STORE_LABOR).getAll().onsuccess=e=>r(e.target.result)); },
+    getPCById: async function(id){ const db=await this.openDB(); return new Promise(r=>db.transaction([STORE_LABOR],'readonly').objectStore(STORE_LABOR).get(Number(id)).onsuccess=e=>r(e.target.result)); },
+    updatePC: async function(d){ const db=await this.openDB(); return new Promise(r=>db.transaction([STORE_LABOR],'readwrite').objectStore(STORE_LABOR).put(d).onsuccess=()=>r("Ok")); },
+    deletePC: async function(id){ const db=await this.openDB(); return new Promise(r=>db.transaction([STORE_LABOR],'readwrite').objectStore(STORE_LABOR).delete(Number(id)).onsuccess=()=>r(true)); },
 
     // =========================================
-    // FITUR KHUSUS: MANAJEMEN KOMPUTER LABOR
+    // FITUR KHUSUS: DATA PASIEN UKS (BARU)
     // =========================================
     
-    // 1. Tambah Data PC
-    addPC: async function(data) {
+    addPasien: async function(data) {
         const db = await this.openDB();
         return new Promise((resolve, reject) => {
-            const tx = db.transaction([STORE_LABOR], 'readwrite');
-            const req = tx.objectStore(STORE_LABOR).add(data);
-            req.onsuccess = () => resolve("Berhasil");
-            req.onerror = () => reject("No PC sudah ada!");
+            const tx = db.transaction([STORE_PASIEN], 'readwrite');
+            tx.objectStore(STORE_PASIEN).add(data).onsuccess = () => resolve("Data Pasien Disimpan");
+            tx.onerror = () => reject("Gagal");
         });
     },
 
-    // 2. Ambil Semua Data PC
-    getAllPC: async function() {
+    getAllPasien: async function() {
         const db = await this.openDB();
         return new Promise((resolve) => {
-            const tx = db.transaction([STORE_LABOR], 'readonly');
-            tx.objectStore(STORE_LABOR).getAll().onsuccess = (e) => resolve(e.target.result);
+            const tx = db.transaction([STORE_PASIEN], 'readonly');
+            tx.objectStore(STORE_PASIEN).getAll().onsuccess = (e) => resolve(e.target.result);
         });
     },
 
-    // 3. Ambil 1 PC (Untuk Edit)
-    getPCById: async function(id) {
+    deletePasien: async function(id) {
         const db = await this.openDB();
         return new Promise((resolve) => {
-            const tx = db.transaction([STORE_LABOR], 'readonly');
-            tx.objectStore(STORE_LABOR).get(Number(id)).onsuccess = (e) => resolve(e.target.result);
-        });
-    },
-
-    // 4. Update PC
-    updatePC: async function(data) {
-        const db = await this.openDB();
-        return new Promise((resolve, reject) => {
-            const tx = db.transaction([STORE_LABOR], 'readwrite');
-            const req = tx.objectStore(STORE_LABOR).put(data);
-            req.onsuccess = () => resolve("Berhasil Update");
-            req.onerror = () => reject("Gagal Update");
-        });
-    },
-
-    // 5. Hapus PC
-    deletePC: async function(id) {
-        const db = await this.openDB();
-        return new Promise((resolve) => {
-            const tx = db.transaction([STORE_LABOR], 'readwrite');
-            tx.objectStore(STORE_LABOR).delete(Number(id)).onsuccess = () => resolve(true);
+            const tx = db.transaction([STORE_PASIEN], 'readwrite');
+            tx.objectStore(STORE_PASIEN).delete(id).onsuccess = () => resolve(true);
         });
     }
-    
 };
 
 // =========================================
