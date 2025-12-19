@@ -1,256 +1,198 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Login IndexedDB</title>
-    <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f9; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-        .container { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 500px; }
-        h2 { text-align: center; color: #333; margin-top: 0; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; color: #666; }
-        input { width: 100%; padding: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
-        button { width: 100%; padding: 10px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; margin-top: 10px; }
-        button:hover { background-color: #0056b3; }
-        button.secondary { background-color: #6c757d; margin-top: 5px; }
-        button.secondary:hover { background-color: #545b62; }
-        button.logout { background-color: #dc3545; margin-top: 20px; }
-        button.logout:hover { background-color: #c82333; }
-        
-        /* Utility untuk menyembunyikan halaman */
-        .hidden { display: none; }
-        
-        /* Table Styles */
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: #f2f2f2; }
-        .link { text-align: center; margin-top: 15px; font-size: 14px; }
-        .link a { color: #007bff; cursor: pointer; text-decoration: underline; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Login - USTI</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      /* Pastikan gambar background ada, atau ganti warna jika tidak ada */
+      background: url('docs/assets/img/ustii.jpg') no-repeat center center fixed;
+      background-size: cover;
+      background-color: #f0f2f5; 
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .login-container {
+      width: 100%;
+      max-width: 400px;
+      padding: 40px;
+      border-radius: 15px;
+      background-color: rgba(255, 255, 255, 0.9); /* Efek Kaca */
+      box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+    }
+
+    .login-container h2 {
+      text-align: center;
+      margin-bottom: 30px;
+      color: #00478d;
+      font-weight: bold;
+    }
+
+    .form-control {
+      border-radius: 8px;
+      padding: 10px;
+    }
+
+    .btn-login {
+      width: 100%;
+      padding: 12px;
+      background-color: #00478d;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 16px;
+      transition: all 0.3s;
+    }
+
+    .btn-login:hover {
+      background-color: #003366;
+      transform: translateY(-2px);
+    }
+
+    .input-group-text {
+      background: white;
+      cursor: pointer;
+      border-left: none;
+      border-radius: 0 8px 8px 0;
+    }
+    
+    .password-field {
+        border-right: none;
+        border-radius: 8px 0 0 8px;
+    }
+
+    .footer-link {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 14px;
+    }
+    
+    .footer-link a {
+        text-decoration: none;
+        color: #00478d;
+        font-weight: bold;
+    }
+  </style>
 </head>
 <body>
 
-    <div class="container">
-        
-        <div id="view-login">
-            <h2>Login Sistem</h2>
-            <div class="form-group">
-                <label>Email:</label>
-                <input type="email" id="login-email">
-            </div>
-            <div class="form-group">
-                <label>Password:</label>
-                <input type="password" id="login-password">
-            </div>
-            <button onclick="prosesLogin()">Masuk</button>
-            <div class="link">
-                Belum punya akun? <a onclick="gantiHalaman('view-register')">Daftar disini</a>
-            </div>
+  <div class="login-container">
+    <h2>Login Sistem</h2>
+    
+    <form onsubmit="event.preventDefault(); handleLogin();">
+      
+      <div class="mb-3">
+        <label for="login-nama" class="form-label fw-bold">Nama User</label>
+        <div class="input-group">
+            <span class="input-group-text" style="border-right:none; border-radius: 8px 0 0 8px; cursor: default;">
+                <i class="bi bi-person"></i>
+            </span>
+            <input type="text" class="form-control" id="login-nama" placeholder="Masukkan Nama Anda" required style="border-left:none; border-radius: 0 8px 8px 0;">
         </div>
+      </div>
 
-        <div id="view-register" class="hidden">
-            <h2>Registrasi User Baru</h2>
-            <div class="form-group">
-                <label>Nama Lengkap:</label>
-                <input type="text" id="reg-nama">
-            </div>
-            <div class="form-group">
-                <label>Email:</label>
-                <input type="email" id="reg-email">
-            </div>
-            <div class="form-group">
-                <label>Password:</label>
-                <input type="password" id="reg-password">
-            </div>
-            <button onclick="prosesRegister()">Daftar Sekarang</button>
-            <button class="secondary" onclick="gantiHalaman('view-login')">Batal / Kembali Login</button>
+      <div class="mb-4">
+        <label for="login-password" class="form-label fw-bold">Password</label>
+        <div class="input-group">
+          <input type="password" class="form-control password-field" id="login-password" placeholder="Masukkan Password" required>
+          <span class="input-group-text toggle-password">
+            <i class="bi bi-eye-slash"></i>
+          </span>
         </div>
+      </div>
 
-        <div id="view-dashboard" class="hidden">
-            <h2>Dashboard Admin</h2>
-            <p>Selamat datang, <strong id="user-active">User</strong>!</p>
+      <button type="submit" class="btn btn-primary btn-login">Masuk</button>
+
+      <div class="footer-link">
+        Belum punya akun? <a href="register_admin.html">Daftar sekarang</a>
+      </div>
+    </form>
+  </div>
+
+  <script src="db.js"></script>
+  
+  <script>
+    // 1. Cek Sesi (Jika sudah login, langsung lempar ke dashboard yang sesuai)
+    const activeSession = JSON.parse(localStorage.getItem('user_session'));
+    if(activeSession) {
+        redirectUser(activeSession.role);
+    }
+
+    // 2. Fitur Lihat Password
+    document.querySelector('.toggle-password').addEventListener('click', function() {
+        const input = document.getElementById('login-password');
+        const icon = this.querySelector('i');
+        if (input.type === "password") {
+            input.type = "text";
+            icon.classList.remove('bi-eye-slash');
+            icon.classList.add('bi-eye');
+        } else {
+            input.type = "password";
+            icon.classList.remove('bi-eye');
+            icon.classList.add('bi-eye-slash');
+        }
+    });
+
+    // 3. Logic Login
+    async function handleLogin() {
+        const nama = document.getElementById('login-nama').value;
+        const password = document.getElementById('login-password').value;
+
+        try {
+            // Memanggil fungsi login dari db.js (Login by Nama)
+            const user = await dbService.login(nama, password);
             
-            <hr>
-            <h3>Tambah Data User Lain</h3>
-            <div class="form-group">
-                <input type="text" id="input-nama" placeholder="Nama User...">
-            </div>
-            <div class="form-group">
-                <input type="email" id="input-email" placeholder="Email User...">
-            </div>
-            <button onclick="tambahDataDashboard()">Simpan Data</button>
-
-            <table id="tabelUser">
-                <thead>
-                    <tr>
-                        <th>Nama</th>
-                        <th>Email</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-
-            <button class="logout" onclick="logout()">Logout</button>
-        </div>
-
-    </div>
-
-    <script>
-        let db;
-        const DB_NAME = 'SistemLoginDB';
-        const DB_VERSION = 2; // Versi dinaikkan untuk update struktur
-        const STORE_NAME = 'users';
-
-        // --- 1. INISIALISASI DATABASE ---
-        const request = indexedDB.open(DB_NAME, DB_VERSION);
-
-        request.onupgradeneeded = function(event) {
-            db = event.target.result;
-            // Buat object store jika belum ada
-            if (!db.objectStoreNames.contains(STORE_NAME)) {
-                const objectStore = db.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
-                // Buat Index 'email' agar kita bisa search by email saat login
-                // unique: true artinya tidak boleh ada 2 email yang sama
-                objectStore.createIndex('email', 'email', { unique: true });
-            }
-        };
-
-        request.onsuccess = function(event) {
-            db = event.target.result;
-            console.log("Database Ready");
-        };
-
-        request.onerror = function(event) {
-            console.error("DB Error:", event.target.errorCode);
-        };
-
-
-        // --- 2. LOGIC LOGIN ---
-        function prosesLogin() {
-            const email = document.getElementById('login-email').value;
-            const password = document.getElementById('login-password').value;
-
-            if (!email || !password) { alert("Isi email dan password!"); return; }
-
-            const transaction = db.transaction([STORE_NAME], 'readonly');
-            const store = transaction.objectStore(STORE_NAME);
-            const index = store.index('email');
+            // Simpan sesi
+            const sessionData = { 
+                id_user: user.id_user, 
+                nama: user.nama, 
+                role: user.role 
+            };
             
-            // Cari user berdasarkan email
-            const requestGet = index.get(email);
-
-            requestGet.onsuccess = function() {
-                const result = requestGet.result;
-                
-                if (result) {
-                    // Cek Password (sederhana)
-                    if (result.password === password) {
-                        alert("Login Berhasil!");
-                        masukDashboard(result.nama);
-                    } else {
-                        alert("Password salah!");
-                    }
-                } else {
-                    alert("Email tidak ditemukan. Silakan daftar.");
-                }
-            };
-        }
-
-
-        // --- 3. LOGIC REGISTER ---
-        function prosesRegister() {
-            const nama = document.getElementById('reg-nama').value;
-            const email = document.getElementById('reg-email').value;
-            const password = document.getElementById('reg-password').value;
-
-            if (!nama || !email || !password) { alert("Semua kolom wajib diisi!"); return; }
-
-            const transaction = db.transaction([STORE_NAME], 'readwrite');
-            const store = transaction.objectStore(STORE_NAME);
-
-            const newUser = { nama: nama, email: email, password: password, created: new Date() };
-            const requestAdd = store.add(newUser);
-
-            requestAdd.onsuccess = function() {
-                alert("Registrasi Berhasil! Silakan Login.");
-                // Reset form
-                document.getElementById('reg-nama').value = '';
-                document.getElementById('reg-email').value = '';
-                document.getElementById('reg-password').value = '';
-                gantiHalaman('view-login');
-            };
-
-            requestAdd.onerror = function(e) {
-                alert("Gagal daftar! Kemungkinan email sudah terpakai.");
-            };
-        }
-
-
-        // --- 4. LOGIC DASHBOARD (CRUD) ---
-        function masukDashboard(namaUser) {
-            document.getElementById('user-active').innerText = namaUser;
-            document.getElementById('login-email').value = ''; // Clear login form
-            document.getElementById('login-password').value = ''; 
+            localStorage.setItem('user_session', JSON.stringify(sessionData));
             
-            gantiHalaman('view-dashboard');
-            loadTabelData(); // Muat data tabel
-        }
-
-        function tambahDataDashboard() {
-            // Ini fitur tambah data biasa (tanpa password) di dalam dashboard
-            const nama = document.getElementById('input-nama').value;
-            const email = document.getElementById('input-email').value;
-
-            if(!nama || !email) return alert("Isi data!");
-
-            const transaction = db.transaction([STORE_NAME], 'readwrite');
-            const store = transaction.objectStore(STORE_NAME);
+            alert("Login Berhasil! Selamat datang " + user.nama);
             
-            // Kita simpan user tanpa password (atau default) karena ini input admin
-            store.add({ nama: nama, email: email, password: 'default-user', created: new Date() });
+            // Redirect sesuai Role
+            redirectUser(user.role);
 
-            transaction.oncomplete = function() {
-                document.getElementById('input-nama').value = '';
-                document.getElementById('input-email').value = '';
-                loadTabelData();
-            }
+        } catch (error) {
+            alert("Gagal Login: " + error);
         }
+    }
 
-        function loadTabelData() {
-            const tbody = document.querySelector('#tabelUser tbody');
-            tbody.innerHTML = ''; 
-
-            const transaction = db.transaction([STORE_NAME], 'readonly');
-            const store = transaction.objectStore(STORE_NAME);
-            const requestCursor = store.openCursor();
-
-            requestCursor.onsuccess = function(event) {
-                const cursor = event.target.result;
-                if (cursor) {
-                    tbody.innerHTML += `<tr><td>${cursor.value.nama}</td><td>${cursor.value.email}</td></tr>`;
-                    cursor.continue();
-                }
-            };
+    // 4. Fungsi Redirect Halaman
+    function redirectUser(role) {
+        switch(role) {
+            case 'admin':
+                window.location.href = 'dashboard_admin.html';
+                break;
+            case 'sarpras':
+                window.location.href = 'dashboard_sarpras.html';
+                break;
+            case 'tkj':
+                window.location.href = 'dashboard_tkj.html';
+                break;
+            case 'uks':
+                window.location.href = 'dashboard_uks.html';
+                break;
+            default:
+                alert("Role tidak dikenali, hubungi admin.");
+                localStorage.removeItem('user_session'); // Hapus sesi error
         }
+    }
+  </script>
 
-
-        // --- 5. UTILITY & NAVIGASI ---
-        function gantiHalaman(idHalaman) {
-            // Sembunyikan semua halaman
-            document.getElementById('view-login').classList.add('hidden');
-            document.getElementById('view-register').classList.add('hidden');
-            document.getElementById('view-dashboard').classList.add('hidden');
-
-            // Tampilkan halaman target
-            document.getElementById(idHalaman).classList.remove('hidden');
-        }
-
-        function logout() {
-            if(confirm("Yakin ingin keluar?")) {
-                gantiHalaman('view-login');
-            }
-        }
-    </script>
 </body>
 </html>
